@@ -17,6 +17,12 @@
 .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
     text-transform: none;
 }
+p.note {
+    font-size: 16pt;
+}
+.fs1 { font-size: 75%; }
+.fs2 { font-size: 60%; }
+.fs3 { font-size: 100%; }
 </style>
 </head>
 <body>
@@ -24,161 +30,137 @@
         <div class="slides">
 
 <section>
-  <h1>C++ References</h1>
-  <p>
-      <small>Ivan Pogrebnyak</small><br>
-      <small>March 2025</small>
-  </p>
-  <div class="footer" style="font-size: 10pt;">
+  <h1 style="font-size: 60pt;">C++ References and Special Member Functions</h1>
+  <p style="font-size: 26pt;">Ivan Pogrebnyak</p>
+  <p style="font-size: 16pt;">July 2025</p>
+  <p style="font-size: 10pt;">
       Created with <a href="https://revealjs.com/" target=_blank>reveal.js</a>
-  </div>
+  </p>
+  <p style="font-size: 16pt; margin-top: 2em;">
+      <a href="https://ivankp.github.io/slides-cpp-references/" target=_blank>https://ivankp.github.io/slides-cpp-references/</a>
+  </p>
 </section>
-
-<!--
-<section>
-  <section>
-    <h3><code>struct</code> vs <code>class</code></h3>
-    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        struct A : B {
-            int x;
-        };
-    </code></pre>
-    <p>same as</p>
-    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        class A : public B {
-        public:
-            int x;
-        };
-    </code></pre>
-  </section>
-  <section>
-    <h3><code>struct</code> vs <code>class</code></h3>
-    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        class A : B {
-            int x;
-        };
-    </code></pre>
-    <p>same as</p>
-    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        struct A : private B {
-        private:
-            int x;
-        };
-    </code></pre>
-  </section>
-</section>
--->
 
 <section>
   <section>
     <h3>Special Member Functions</h3>
-    <div style="font-size: 68%;">
-    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        struct A {
-            std::string str;
-            // Default constructor
-            A(): str() { }
-            // Copy constructor
-            A(const A&amp; other) : str(other.str) { }
-            // Copy assignment operator
-            A&amp; operator=(const A&amp; other) {
-                str = other.str;
+    <div class="fs1">
+    <pre data-id="code-animation">
+    <code class="c++" data-trim data-line-numbers style="max-height: 600px; line-height: 1.5;">
+        class Example {
+            std::string data; // Private data
+        public:
+            Example(): data() /* Initializer list */ { } // Default constructor
+            Example(std::string_view str): data(str) { } // Parameterized constructor
+            Example(const Example&amp; other): data(other.data) { } // Copy constructor
+            Example&amp; operator=(const Example&amp; other) { // Copy assignment operator
+                data = other.data;
                 return *this;
             }
-            // Move constructor
-            A(A&amp;&amp; other) noexcept : str(std::move(other.str)) { }
-            // Move assignment operator
-            A&amp; operator=(A&amp;&amp; other) noexcept {
-                str = std::move(other.str);
+            Example(Example&amp;&amp; other) noexcept // Move constructor
+            : data(std::move(other.data)) { }
+            Example&amp; operator=(Example&amp;&amp; other) noexcept { // Move assignment operator
+                data = std::move(other.data);
                 return *this;
             }
-            // Destructor
-            ~A() { }
+            ~Example() { } // Destructor
         };
     </code></pre>
     </div>
+    <p class="note"><span style="text-decoration: underline;">Best practice</span> (since C++11):
+    Declare move constructors and assignment operators <code class="c++">noexcept</code> if
+    possible. Standard library containers provide no-throw guarantees in many places and will prefer
+    copying over potentially throwing during moving.</p>
   </section>
 
   <section>
-    <h3>Test class</h3>
-    <div style="font-size: 68%;">
-    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
+    <h3>A test class</h3>
+    <div style="font-size: 18pt;">
+    <pre data-id="code-animation">
+    <code class="c++" data-trim data-line-numbers style="max-height: 600px; line-height: 1.5;">
+        #include &lt;cstdio&gt; // std::puts
+        struct Test {
+            Test() noexcept { // Default constructor
+                std::puts("Default constructed");
+            }
+            Test(const Test&amp;) noexcept { // Copy constructor
+                std::puts("Copy constructed");
+            }
+            Test&amp; operator=(const Test&amp;) noexcept { // Copy assignment operator
+                std::puts("Copy assigned");
+                return *this;
+            }
+            Test(Test&amp;&amp;) noexcept { // Move constructor
+                std::puts("Move constructed");
+            }
+            Test&amp; operator=(Test&amp;&amp;) noexcept { // Move assignment operator
+                std::puts("Move assigned");
+                return *this;
+            }
+            ~Test() noexcept { // Destructor
+                std::puts("Destroyed");
+            }
+        };
+    </code></pre>
+    </div>
+    <p class="note">
+    This class will print a message describing what function was used every time an instance of it
+    is initialized, copied, or moved.</p>
+  </section>
+
+  <section>
+    <h3>The test class we will use</h3>
+    <div style="font-size: 18pt;">
+    <pre data-id="code-animation">
+    <code class="c++" data-trim data-line-numbers style="max-height: 600px; line-height: 1.5;">
         struct Test {
             const char* label;
-            // Parametrized constructor
-            Test(const char* label): label(label) { }
-            // Default constructor
-            Test(): label("Default constructed") { }
-            // Copy constructor
-            Test(const Test&amp;): label("Copy constructed") { }
-            // Copy assignment operator
-            Test&amp; operator=(const Test&amp;) {
-               label = "Copy assigned";
-               return *this;
-            }
-            // Move constructor
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            // Move assignment operator
-            Test&amp; operator=(Test&amp;&amp;) noexcept {
-               label = "Move assigned";
-               return *this;
-            }
-        };
-    </code></pre>
-    </div>
-  </section>
 
-  <section>
-    <h3>Another test class</h3>
-    <div style="font-size: 68%;">
-    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        struct Test {
-            // Default constructor
-            Test() { puts("Default constructed") }
-            // Copy constructor
-            Test(const Test&amp;) { puts("Copy constructed"); }
-            // Copy assignment operator
-            Test&amp; operator=(const Test&amp;) {
-               puts("Copy assigned");
-               return *this;
+            Test() noexcept
+              : label("Default constructed") { }
+
+            Test(const Test&amp;) noexcept
+              : label("Copy constructed") { }
+            Test&amp; operator=(const Test&amp;) noexcept {
+                label = "Copy assigned";
+                return *this;
             }
-            // Move constructor
-            Test(Test&amp;&amp;) noexcept { puts("Move constructed"); }
-            // Move assignment operator
+
+            Test(Test&amp;&amp;) noexcept
+              : label("Move constructed") { }
             Test&amp; operator=(Test&amp;&amp;) noexcept {
-               puts("Move assigned");
-               return *this;
+                label = "Move assigned";
+                return *this;
             }
         };
     </code></pre>
     </div>
+    <p class="note">
+    This class changes the value of the <code>label</code> member variable depending on how the
+    instance was constructed, copied, or moved.</p>
   </section>
 </section>
 
 <section>
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
         int main() {
-            Test x;
-            puts(x.label);
+            Test a;
+            puts(a.label);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           Default constructed
       </code></pre>
@@ -186,88 +168,119 @@
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        Test MakeTest() { return { }; }
+        Test MakeTest() { // Factory function
+            return { };
+        }
 
         int main() {
-            auto x = MakeTest();
-            puts(x.label);
+            Test b = MakeTest();
+            puts(b.label);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           Default constructed
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       Copy elision
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
+    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
+        Test MakeTest() { // Factory function
+            return { };
+            // Guaranteed copy elision since C++17
+            // Unnamed Return Value Optimization (URVO)
+        }
+
+        Test MakeTest2() {
+            Test tmp;
+            return tmp;
+            // Automatic move since C++11
+            // Copy elision is *permitted* by the standard
+            // Named Return Value Optimization (NRVO)
+        }
+    </code></pre>
+    </div>
+    <div class="fragment fs1">
+      <p class="note"><span style="text-decoration: underline;">Best practice</span> (since C++11):
+      Don't do <code>return std::move(tmp);</code>.
+      The explicit move prevents possible return value optimization.
+      You won't make a copy anyway.</p>
+    </div>
+    <div class="fragment fs1">
+      <p class="note">References:
+      <a href="https://en.cppreference.com/w/cpp/language/copy_elision.html" target="_blank">Copy elision</a>,
+      <a href="https://en.cppreference.com/w/cpp/language/return.html#Automatic_move_from_local_variables_and_parameters" target="_blank">Automatic move</a>
+      </p>
+    </div>
+  </section>
+
+  <section data-auto-animate>
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
+    </code></pre>
+    </div>
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
         int main() {
             Test a;
-            auto b = a;
+            Test b = a;
             puts(b.label);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           Copy constructed
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <code>a</code> is copied to <code>b</code>.
       This is a copy contruction, not copy assignment.
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
         int main() {
             Test a, b;
@@ -276,185 +289,255 @@
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           Copy assigned
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       This is a copy assignment.
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
         int main() {
             Test a;
-            auto&amp; b = a;
+            Test&amp; b = a;
             puts(b.label);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           Default constructed
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <code>b</code> is a reference to <code>a</code>.
       No copy is made.
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        Test MakeTest() { return { }; }
+        Test MakeTest() { return { }; } // Factory function
 
         int main() {
-            auto&amp; x = MakeTest();
-            puts(x.label);
+            Test&amp; b = MakeTest();
+            puts(b.label);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           error: cannot bind non-const lvalue reference
                  of type 'Test&amp;' to an rvalue of type 'Test'
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
+      Temporary values cannot bind to mutable lvalue references. (MSVC 🧐)
+    </div>
+    <div class="fragment fs1">
       We'll get back to value categories.
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        Test MakeTest() { return { }; }
+        Test MakeTest() { return { }; } // Factory function
 
         int main() {
-            const auto&amp; x = MakeTest();
-            puts(x.label);
+            const Test&amp; b = MakeTest();
+            puts(b.label);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre><code class="txt" data-trim>
           Default constructed
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       Temporary values can bind to const references.
       The lifetime of the temporary is extended to the scope of the reference.
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        void UseTest(Test test) { puts(test.label); }
+        void UseTest(Test b) { puts(b.label); }
 
         int main() {
-            Test x;
-            UseTest(x);
+            Test a;
+            UseTest(a);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre><code class="txt" data-trim>
           Copy constructed
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       Pass by value makes a copy.
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        void UseTest(const Test&amp; test) { puts(test.label); }
+        void UseTest(const Test&amp; b) { puts(b.label); }
 
         int main() {
-            Test x;
-            UseTest(x);
+            Test a;
+            UseTest(a);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre><code class="txt" data-trim>
           Default constructed
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       Pass by reference does not makes a copy.
+    </div>
+  </section>
+
+  <section data-auto-animate>
+    <div class="fs3">
+    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
+        void UseTest(Test&amp;) { puts("Mutable"); }
+        void UseTest(const Test&amp;) { puts("Constant"); }
+
+        int main() {
+            const Test a;
+            UseTest(a);
+        }
+    </code></pre>
+    </div>
+    <div class="fragment fs1">
+      <pre><code class="txt" data-trim>
+          Constant
+      </code></pre>
+    </div>
+  </section>
+
+  <section data-auto-animate>
+    <div class="fs3">
+    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
+        void UseTest(Test&amp;) { puts("Mutable"); }
+        void UseTest(const Test&amp;) { puts("Constant"); }
+
+        int main() {
+            Test a;
+            UseTest(a);
+        }
+    </code></pre>
+    </div>
+    <div class="fragment fs1">
+      <pre><code class="txt" data-trim>
+          Mutable
+      </code></pre>
+    </div>
+  </section>
+
+  <section data-auto-animate>
+    <div class="fs3">
+    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
+        void UseTest(Test&amp;) { puts("Mutable"); }
+        void UseTest(const Test&amp;) { puts("Constant"); }
+
+        int main() {
+            UseTest({});
+        }
+    </code></pre>
+    </div>
+    <div class="fragment fs1">
+      <pre><code class="txt" data-trim>
+          Constant
+      </code></pre>
+    </div>
+    <div class="fragment fs1">
+      Temporary values cannot bind to mutable lvalue references.
+    </div>
+  </section>
+
+  <section data-auto-animate>
+    <div class="fs3">
+    <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
+        void UseTest(Test&amp;) { puts("Mutable"); }
+        void UseTest(const Test&amp;) { puts("Constant"); }
+        void UseTest(Test&amp;&amp;) { puts("&amp;&amp;"); }
+
+        int main() {
+            UseTest({});
+        }
+    </code></pre>
+    </div>
+    <div class="fragment fs1">
+      <pre><code class="txt" data-trim>
+          &amp;&amp;
+      </code></pre>
+    </div>
+    <div class="fragment fs1">
+      Temporary values can bind to mutable rvalue references.
+    </div>
+    <div class="fragment fs1">
+      Same lifetime extension as for <code>const</code> references.
+    </div>
+    <div class="fragment fs1">
+      Also mutable and can be moved!
     </div>
   </section>
 </section>
@@ -465,27 +548,29 @@
     <div style="font-size: 90%;">
     <pre data-id="code-animation"><code class="c++" style="line-height: 1.25;" data-trim data-line-numbers>
         Test a; // Default initialization
-        Test b = a; // Copy construction
-        a = b; // Copy assignment
-        auto&amp; c1 = a; // compilation error
-        const auto&amp; c2 = a; // OK
-        Test d = []() -&gt; Test { return {}; }(); // Copy elision
-        const Test e1 = [&amp;]() -&gt; Test&amp; { return a; }(); // Copy is made
-        const Test&amp; e2 = [&amp;]() -&gt; Test { return a; }(); // Copy is made
-        const Test&amp; e3 = [&amp;]() -&gt; Test&amp; { return a; }(); // No copy
-        [](Test x) { f(x); }(a); // Copy is made
-        [](const Test&amp; x) { f(x); }(a); // No copy
+        Test b(a); // Copy construction
+        Test b = a; // Also copy construction
+        Test b; b = a; // Copy assignment
+        Test&amp; b = Test{}; // Invalid
+        const Test&amp; b = Test{}; // OK, no copy
+        Test&amp;&amp; b = Test{}; // OK, no copy
+        const Test b = []() -&gt; Test { return {}; }(); // Copy elision
+        const Test b /* Copy */ = [&amp;a]() -&gt; Test&amp; { return a; }();
+        const Test&amp; b = [&amp;a]() -&gt; Test /* Copy */ { return a; }();
+        const Test&amp; b = [&amp;a]() -&gt; Test&amp; { return a; }(); // No copy
+        [](Test b /* Copy */) { f(b); }(a);
+        [](const Test&amp; b) { f(b); }(a); // No copy
     </code></pre>
     </div>
   </section>
 
   <section>
     <h3>Guidelines</h3>
-    <div style="font-size: 100%;">
+    <div class="fs3">
       <ol>
         <li>Use <code class="c++">const</code> unless you need mutable access.</li>
         <li>Use references unless you need a copy.</li>
-        <li>Prefer <code class="c++">const auto&amp; x = f();</code></li>
+        <li>Prefer <code class="c++">const Type&amp; x = f();</code></li>
         <li>Prefer passing by reference:<br>
           <code class="c++">void f(const Type&amp; x);</code></li>
         <li>Except for POD types:<br>
@@ -503,6 +588,7 @@
     <div style="font-size: 95%;">
     <pre data-id="code-animation"><code class="c++" style="line-height: 1.25;" data-trim data-line-numbers>
         auto x = f(); // x is a copy
+        for (auto x : f()) { } // an element copy on every iteration
         [](){ return f(); } // copy
         []() -&gt; auto  { return f(); } // copy
         []() -&gt; auto&amp; { return f(); } // no copy
@@ -513,131 +599,105 @@
 
 <section>
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        Test MakeTest() { return { }; }
-
         int main() {
-            auto&amp;&amp; x = MakeTest();
-            puts(x.label);
+            Test&amp;&amp; a = Test{};
+            puts(a.label);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           Default constructed
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       Temporaries can bind to mutable rvalue references.
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        Test MakeTest() { return { }; }
-
         int main() {
-            auto&amp;&amp; a = MakeTest();
-            auto b = a;
+            Test&amp;&amp; a = Test{};
+            Test b = a;
             puts(b.label);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           Copy constructed
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       The type of <code>a</code> is <code>Test&amp;&amp;</code>,
       but its category is lvalue, not rvalue.
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        Test MakeTest() { return { }; }
-
         int main() {
-            auto&amp;&amp; a = MakeTest();
-            // auto a = MakeTest(); // same result (copy elision)
-            // Test a; // same result
-            auto b = std::move(a);
+            Test&amp;&amp; a = Test{};
+            Test b = std::move(a);
             puts(b.label);
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           Move constructed
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       The type of <code>std::move(a)</code> is <code>Test&amp;&amp;</code>
       and its category is rvalue.
     </div>
   </section>
 
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
-        Test MakeTest() { return { }; }
-
         int main() {
             Test a, b;
             b = std::move(a);
@@ -645,12 +705,12 @@
         }
     </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       <pre data-id="code-animation"><code class="txt" data-trim>
           Move assigned
       </code></pre>
     </div>
-    <div style="font-size: 75%;" class="fragment">
+    <div class="fragment fs1">
       The type of <code>std::move(a)</code> is <code>Test&amp;&amp;</code>
       and its category is rvalue.
     </div>
@@ -664,16 +724,16 @@
     <pre data-id="code-animation"><code class="c++" style="line-height: 1.25;" data-trim data-line-numbers>
         Test a; // Default initialization
         Test b = std::move(a); // Move construction
-        a = std::move(b); // Move assignment
-        auto&amp;&amp; c1 = a; // OK
-        const auto&amp;&amp; c2 = a; // OK
+        Test b; b = std::move(a); // Move assignment
+        Test&amp;&amp; b = a; // OK
+        const Test&amp;&amp; b = a; // OK, but why?
     </code></pre>
     </div>
   </section>
 
   <section>
     <h3>Guidelines</h3>
-    <div style="font-size: 100%;">
+    <div class="fs3">
       <ol>
         <li>Both type and value category must be suitable for a move.</li>
         <li>Explicit use of rvalue references is mainly
@@ -689,20 +749,16 @@
 
 <section>
   <section data-auto-animate>
-    <div style="font-size: 25%;">
-    <pre data-id="code-animation"><code class="c++" style="line-height: 1.75;" data-trim data-line-numbers>
-        struct Test {
-            const char* label;
-            Test(const char* label): label(label) { }
-            Test(): label("Default constructed") { }
-            Test(const Test&amp;): label("Copy constructed") { }
-            Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
-            Test(Test&amp;&amp;) noexcept : label("Move constructed") { }
-            Test&amp; operator=(Test&amp;&amp;) noexcept { label = "Move assigned"; return *this; }
-        };
+    <div class="fs2">
+    <pre data-id="code-animation"><code class="c++" style="line-height: 1.5;" data-trim data-line-numbers>
+        Test(): label("Default constructed") { }
+        Test(const Test&amp;): label("Copy constructed") { }
+        Test&amp; operator=(const Test&amp;) { label = "Copy assigned"; return *this; }
+        Test(Test&amp;&amp;): label("Move constructed") { }
+        Test&amp; operator=(Test&amp;&amp;) { label = "Move assigned"; return *this; }
     </code></pre>
     </div>
-    <div style="font-size: 100%;">
+    <div class="fs3">
     <pre data-id="code-animation"><code class="c++" data-trim data-line-numbers>
         int main() {
             std::vector&lt;Test&gt; vec;
@@ -727,23 +783,14 @@
 
 <section>
   <section>
-    <h3>Future topics</h3>
+    <h3>Related topics for the future</h3>
     <ol>
-      <li>Deleted and defaulted special functions</li>
-      <li>Defaulted vs user-defined special functions</li>
+      <li>User-defined, defaulted and deleted special functions</li>
       <li>Rule of 0/3/5</li>
       <li>Forwarding references in templates</li>
       <li>References collapsing</li>
     </ol>
   </section>
-
-  <section>
-    <img src="hinnant_table.png">
-    <div style="font-size: 75%;">
-      <a href="https://safecpp.com/RuleOfDesDeMovA.html" target="_blank">https://safecpp.com/RuleOfDesDeMovA.html</a>
-    </div>
-  </section>
-</section>
 
         </div>
     </div>
@@ -763,6 +810,12 @@
           progress: true,
           slideNumber: false,
           transition: 'none',
+
+          // width: '100%',
+          // height: '100%',
+          margin: 0.01,
+          // minScale: 1,
+          // maxScale: 1,
 
           // Learn about plugins: https://revealjs.com/plugins/
           plugins: [ RevealHighlight ]
