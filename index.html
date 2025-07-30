@@ -358,9 +358,6 @@ p.note {
     <div class="fragment fs1">
       Temporary values cannot bind to mutable lvalue references. (MSVC 🧐)
     </div>
-    <div class="fragment fs1">
-      We'll get back to value categories.
-    </div>
   </section>
 
   <section data-auto-animate>
@@ -588,7 +585,7 @@ p.note {
     <div style="font-size: 95%;">
     <pre data-id="code-animation"><code class="c++" style="line-height: 1.25;" data-trim data-line-numbers>
         auto x = f(); // x is a copy
-        for (auto x : f()) { } // an element copy on every iteration
+        for (auto x : xs) { } // an element copy on every iteration
         [](){ return f(); } // copy
         []() -&gt; auto  { return f(); } // copy
         []() -&gt; auto&amp; { return f(); } // no copy
@@ -733,16 +730,14 @@ p.note {
 
   <section>
     <h3>Guidelines</h3>
-    <div class="fs3">
+    <div style="font-size: 90%;">
       <ol>
         <li>Both type and value category must be suitable for a move.</li>
-        <li>Explicit use of rvalue references is mainly
-          for function arguments and templates.</li>
+        <li><code>Type&amp;&amp;</code> should mainly be used as function arguments.</li>
       </ol>
     </div>
     <pre data-id="code-animation"><code class="c++" style="line-height: 1.25;" data-trim data-line-numbers>
-        for (auto&amp;&amp; x : xs) // consider const auto&amp; or auto&amp;
-        auto&amp;&amp; x = f(); // makes more sense in generic code
+        for (auto&amp;&amp; x : xs) // valid, but consider const auto&amp; or auto&amp;
     </code></pre>
   </section>
 </section>
